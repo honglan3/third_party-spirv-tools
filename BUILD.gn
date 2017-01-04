@@ -1,0 +1,290 @@
+# Copyright 2017 The Fuchsia Authors
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice (including the next
+# paragraph) shall be included in all copies or substantial portions of the
+# Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+
+import("//magma/gnbuild/magma.gni")
+
+group("generate_include_files") {
+  deps = [
+    ":build_version_include_file",
+    ":core_and_operands_1_0_include_files",
+    ":core_and_operands_1_1_include_files",
+    ":glsl_1_0_include_file",
+    ":opencl_1_0_include_file",
+  ]
+}
+
+action("build_version_include_file") {
+  script = "utils/update_build_version.py"
+  args = [
+    rebase_path(".", root_build_dir),
+    rebase_path("$target_gen_dir/build-version.inc", root_build_dir),
+  ]
+  sources = [
+    "CHANGES",
+  ]
+  outputs = [
+    "$target_gen_dir/build-version.inc",
+  ]
+}
+
+action("opencl_1_0_include_file") {
+  script = "utils/generate_grammar_tables.py"
+  spirv_core_grammar =
+      "external/spirv-headers/include/spirv/1.0/spirv.core.grammar.json"
+  opencl_grammar = "source/extinst-1.0.opencl.std.grammar.json"
+  output_file = "opencl.std.insts-1.0.inc"
+
+  args = [
+    "--spirv-core-grammar=" + rebase_path(spirv_core_grammar, root_build_dir),
+    "--extinst-opencl-grammar=" + rebase_path(opencl_grammar, root_build_dir),
+    "--opencl-insts-output=" +
+        rebase_path("$target_gen_dir/$output_file", root_build_dir),
+  ]
+  sources = [
+    opencl_grammar,
+    spirv_core_grammar,
+  ]
+  outputs = [
+    "$target_gen_dir/$output_file",
+  ]
+}
+
+action("glsl_1_0_include_file") {
+  script = "utils/generate_grammar_tables.py"
+  spirv_core_grammar =
+      "external/spirv-headers/include/spirv/1.0/spirv.core.grammar.json"
+  glsl_grammar = "external/spirv-headers/include/spirv/1.0/extinst.glsl.std.450.grammar.json"
+  output_file = "$target_gen_dir/glsl.std.450.insts-1.0.inc"
+
+  args = [
+    "--spirv-core-grammar=" + rebase_path(spirv_core_grammar, root_build_dir),
+    "--extinst-glsl-grammar=" + rebase_path(glsl_grammar, root_build_dir),
+    "--glsl-insts-output=" + rebase_path(output_file, root_build_dir),
+  ]
+  sources = [
+    glsl_grammar,
+    spirv_core_grammar,
+  ]
+  outputs = [
+    output_file,
+  ]
+}
+
+action("core_and_operands_1_0_include_files") {
+  script = "utils/generate_grammar_tables.py"
+  spirv_core_grammar =
+      "external/spirv-headers/include/spirv/1.0/spirv.core.grammar.json"
+  core_insts_output_file = "$target_gen_dir/core.insts-1.0.inc"
+  operand_kinds_output_file = "$target_gen_dir/operand.kinds-1.0.inc"
+
+  args = [
+    "--spirv-core-grammar=" + rebase_path(spirv_core_grammar, root_build_dir),
+    "--core-insts-output=" +
+        rebase_path(core_insts_output_file, root_build_dir),
+    "--operand-kinds-output=" +
+        rebase_path(operand_kinds_output_file, root_build_dir),
+  ]
+  sources = [
+    spirv_core_grammar,
+  ]
+  outputs = [
+    core_insts_output_file,
+    operand_kinds_output_file,
+  ]
+}
+
+action("core_and_operands_1_1_include_files") {
+  script = "utils/generate_grammar_tables.py"
+  spirv_core_grammar =
+      "external/spirv-headers/include/spirv/1.1/spirv.core.grammar.json"
+  core_insts_output_file = "$target_gen_dir/core.insts-1.1.inc"
+  operand_kinds_output_file = "$target_gen_dir/operand.kinds-1.1.inc"
+
+  args = [
+    "--spirv-core-grammar=" + rebase_path(spirv_core_grammar, root_build_dir),
+    "--core-insts-output=" +
+        rebase_path(core_insts_output_file, root_build_dir),
+    "--operand-kinds-output=" +
+        rebase_path(operand_kinds_output_file, root_build_dir),
+  ]
+  sources = [
+    spirv_core_grammar,
+  ]
+  outputs = [
+    core_insts_output_file,
+    operand_kinds_output_file,
+  ]
+}
+
+config("include_config") {
+  include_dirs = [
+    "external/spirv-headers/include",
+    "include",
+    "source",
+    ".",
+    target_gen_dir,
+  ]
+}
+
+group("spirv-deps") {
+  public_configs = [ ":include_config" ]
+  deps = [
+    ":generate_include_files",
+  ]
+}
+
+static_library("spirv-tools") {
+  deps = [
+    ":spirv-tools_src($magma_shared_toolchain)",
+  ]
+}
+
+source_set("spirv-tools_src") {
+  deps = [
+    ":spirv-deps",
+  ]
+  sources = [
+    "source/assembly_grammar.cpp",
+    "source/binary.cpp",
+    "source/diagnostic.cpp",
+    "source/disassemble.cpp",
+    "source/ext_inst.cpp",
+    "source/libspirv.cpp",
+    "source/message.cpp",
+    "source/name_mapper.cpp",
+    "source/opcode.cpp",
+    "source/operand.cpp",
+    "source/parsed_operand.cpp",
+    "source/print.cpp",
+    "source/software_version.cpp",
+    "source/spirv_endian.cpp",
+    "source/spirv_target_env.cpp",
+    "source/table.cpp",
+    "source/text.cpp",
+    "source/text_handler.cpp",
+    "source/util/parse_number.cpp",
+    "source/val/basic_block.cpp",
+    "source/val/construct.cpp",
+    "source/val/function.cpp",
+    "source/val/instruction.cpp",
+    "source/val/validation_state.cpp",
+    "source/validate.cpp",
+    "source/validate_cfg.cpp",
+    "source/validate_datarules.cpp",
+    "source/validate_id.cpp",
+    "source/validate_instruction.cpp",
+    "source/validate_layout.cpp",
+  ]
+}
+
+static_library("spirv-tools-opt") {
+  deps = [
+    ":spirv-tools",
+    ":spirv-tools-opt_src($magma_shared_toolchain)",
+  ]
+}
+
+source_set("spirv-tools-opt_src") {
+  deps = [
+    ":spirv-deps",
+  ]
+  sources = [
+    "source/opt/build_module.cpp",
+    "source/opt/def_use_manager.cpp",
+    "source/opt/eliminate_dead_constant_pass.cpp",
+    "source/opt/fold_spec_constant_op_and_composite_pass.cpp",
+    "source/opt/freeze_spec_constant_value_pass.cpp",
+    "source/opt/function.cpp",
+    "source/opt/instruction.cpp",
+    "source/opt/ir_loader.cpp",
+    "source/opt/module.cpp",
+    "source/opt/optimizer.cpp",
+    "source/opt/pass_manager.cpp",
+    "source/opt/set_spec_constant_default_value_pass.cpp",
+    "source/opt/strip_debug_info_pass.cpp",
+    "source/opt/type_manager.cpp",
+    "source/opt/types.cpp",
+    "source/opt/unify_const_pass.cpp",
+  ]
+}
+
+executable("spirv-opt") {
+  deps = [
+    ":spirv-tools-opt",
+    ":spirv-deps",
+    ":spirv-tools",
+  ]
+  sources = [
+    "tools/opt/opt.cpp",
+  ]
+}
+
+executable("spirv-dis") {
+  deps = [
+    ":spirv-tools",
+    ":spirv-deps",
+  ]
+  sources = [
+    "tools/dis/dis.cpp",
+  ]
+}
+
+executable("spirv-cfg") {
+  deps = [
+    ":spirv-tools",
+    ":spirv-deps",
+  ]
+  sources = [
+    "tools/cfg/bin_to_dot.cpp",
+    "tools/cfg/cfg.cpp",
+  ]
+}
+
+executable("spirv-val") {
+  deps = [
+    ":spirv-tools",
+    ":spirv-deps",
+  ]
+  sources = [
+    "tools/val/val.cpp",
+  ]
+}
+
+executable("spirv-as") {
+  deps = [
+    ":spirv-tools",
+    ":spirv-deps",
+  ]
+  sources = [
+    "tools/as/as.cpp",
+  ]
+}
+
+executable("spirv-tools-cpp-example") {
+  deps = [
+    ":spirv-tools",
+    ":spirv-tools-opt",
+  ]
+  include_dirs = [ "include" ]
+  sources = [
+    "examples/cpp-interface/main.cpp",
+  ]
+}
