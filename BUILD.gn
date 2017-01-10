@@ -19,8 +19,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-import("//magma/gnbuild/magma.gni")
-
 group("generate_include_files") {
   deps = [
     ":build_version_include_file",
@@ -153,12 +151,6 @@ group("spirv-deps") {
 
 static_library("spirv-tools") {
   deps = [
-    ":spirv-tools_src($magma_shared_toolchain)",
-  ]
-}
-
-source_set("spirv-tools_src") {
-  deps = [
     ":spirv-deps",
   ]
   sources = [
@@ -198,12 +190,6 @@ source_set("spirv-tools_src") {
 static_library("spirv-tools-opt") {
   deps = [
     ":spirv-tools",
-    ":spirv-tools-opt_src($magma_shared_toolchain)",
-  ]
-}
-
-source_set("spirv-tools-opt_src") {
-  deps = [
     ":spirv-deps",
   ]
   sources = [
