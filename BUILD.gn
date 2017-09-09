@@ -19,6 +19,13 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
+config("spirv_warnings") {
+  visibility = [ ":*" ]
+  cflags_cc = [
+    "-Wno-delete-non-virtual-dtor",
+  ]
+}
+
 group("generate_include_files") {
   deps = [
     ":build_version_include_file",
@@ -150,6 +157,7 @@ group("spirv-deps") {
 }
 
 static_library("spirv-tools") {
+  configs += [ ":spirv_warnings" ]
   deps = [
     ":spirv-deps",
   ]
@@ -188,6 +196,7 @@ static_library("spirv-tools") {
 }
 
 static_library("spirv-tools-opt") {
+  configs += [ ":spirv_warnings" ]
   deps = [
     ":spirv-tools",
     ":spirv-deps",
